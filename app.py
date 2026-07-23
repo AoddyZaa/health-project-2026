@@ -193,6 +193,24 @@ st.divider()
 
 st.subheader("📋 ตารางบันทึกข้อมูล (แก้ไข/ลบได้)")
 edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True, key="health_editor")
+column_config = {
+    "วันที่": st.column_config.TextColumn("วันที่", disabled=True),
+    "เวลา / เหตุการณ์": st.column_config.TextColumn("เวลา / เหตุการณ์", disabled=True),
+    "ความดันตัวบน (SYS)": st.column_config.NumberColumn("ความดันตัวบน (SYS)"),
+    "ความดันตัวล่าง (DIA)": st.column_config.NumberColumn("ความดันตัวล่าง (DIA)"),
+    "ชีพจร (BPM)": st.column_config.NumberColumn("ชีพจร (BPM)"),
+    "น้ำตาลในเลือด (FBS)": st.column_config.NumberColumn("น้ำตาลในเลือด (FBS)"),
+    "น้ำหนัก (kg)": st.column_config.NumberColumn("น้ำหนัก (kg)"),
+    "บันทึกเพิ่มเติม": st.column_config.TextColumn("บันทึกเพิ่มเติม"),
+}
+
+edited_df = st.data_editor(
+    df, 
+    column_config=column_config,
+    num_rows="dynamic", 
+    use_container_width=True, 
+    key="health_editor"
+)
 
 if st.button("🔄 อัปเดตและบันทึกข้อมูลใหม่"):
     for col in ["ความดันตัวบน (SYS)", "ความดันตัวล่าง (DIA)", "ชีพจร (BPM)", "น้ำตาลในเลือด (FBS)", "น้ำหนัก (kg)"]:
