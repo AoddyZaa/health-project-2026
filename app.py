@@ -6,7 +6,7 @@ import io
 import requests
 
 # --- ตั้งค่าหน้าจอและ CSS ธีมเขียวสดใส สไตล์ 3D ---
-st.set_page_config(page_title="บันทึกสุขภาพเพื่อคุณหมอ 2026", layout="wide")
+st.set_page_config(page_title="บันทึกสุขภาพเพื่อคุณหมอ 2026", page_icon="🩺", layout="wide")
 
 st.markdown("""
     <style>
