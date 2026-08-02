@@ -9,7 +9,6 @@ import requests
 st.set_page_config(page_title="บันทึกสุขภาพเพื่อคุณหมอ 2026", page_icon="🩺", layout="wide")
 
 columns_order = ["วันที่", "เวลา / เหตุการณ์", "SYS", "DIA", "BPM", "FBS", "น้ำหนัก", "บันทึกเพิ่มเติม"]
-# อัปเดต URL เป็นของโปรแกรมสุขภาพแล้วครับ!
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxA_6LR6KN7dfd2_4CjaGSE1_OPc9YzAr9V9z0YdHyXJcX_Cnyy9Ter0MpzRhtF0uZ1/exec"
 
 def format_thai_date(date_input):
@@ -42,12 +41,19 @@ def get_data():
         if not data or len(data) <= 1:
             return pd.DataFrame(columns=columns_order)
         
-        header = data[0]
+        # ใช้ตำแหน่งคอลัมน์ตรงๆ เพื่อป้องกันปัญหาชื่อหัวข้อไม่ตรงกัน
         rows = data[1:]
-        df = pd.DataFrame(rows, columns=header)
-        for col in columns_order:
-            if col not in df.columns:
-                df[col] = ""
+        processed_rows = []
+        for r in rows:
+            row_data = []
+            for i in range(len(columns_order)):
+                if i < len(r):
+                    row_data.append(r[i])
+                else:
+                    row_data.append("")
+            processed_rows.append(row_data)
+            
+        df = pd.DataFrame(processed_rows, columns=columns_order)
         
         if 'วันที่' in df.columns:
             df['วันที่'] = df['วันที่'].apply(format_thai_date)
