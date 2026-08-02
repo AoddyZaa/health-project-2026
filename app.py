@@ -14,11 +14,16 @@ WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxA_6LR6KN7dfd2_4CjaGSE1_
 def format_thai_date(date_input):
     try:
         date_str = str(date_input).strip()
+        if not date_str or date_str == "nan":
+            return ""
         if 'T' in date_str:
             clean_date = date_str.split('T')[0].strip()
             dt = datetime.strptime(clean_date, "%Y-%m-%d")
-        else:
+        elif '-' in date_str:
             dt = datetime.strptime(date_str, "%Y-%m-%d")
+        else:
+            # ถ้าเป็นวันที่ภาษาไทยอยู่แล้ว ให้คืนค่าเดิมเพื่อแสดงผล
+            return date_str
         
         if dt.year > 2500:
             year_th = dt.year
@@ -34,6 +39,24 @@ def format_thai_date(date_input):
     except:
         return str(date_input)
 
+def convert_to_iso_date(date_str):
+    try:
+        date_str = str(date_str).strip()
+        month_map = {"มกราคม": 1, "กุมภาพันธ์": 2, "มีนาคม": 3, "เมษายน": 4, "พฤษภาคม": 5, "มิถุนายน": 6, 
+                     "กรกฎาคม": 7, "สิงหาคม": 8, "กันยายน": 9, "ตุลาคม": 10, "พฤศจิกายน": 11, "ธันวาคม": 12}
+        parts = date_str.split()
+        if len(parts) == 3 and parts[1] in month_map:
+            day = int(parts[0])
+            month = month_map[parts[1]]
+            year = int(parts[2])
+            if year > 2500:
+                year -= 543
+            dt = datetime(year, month, day)
+            return dt.strftime("%Y-%m-%d")
+        return date_str
+    except:
+        return date_str
+
 def get_data():
     try:
         response = requests.get(WEB_APP_URL)
@@ -41,32 +64,36 @@ def get_data():
         if not data or len(data) <= 1:
             return pd.DataFrame(columns=columns_order)
         
-        # ใช้ตำแหน่งคอลัมน์ตรงๆ เพื่อป้องกันปัญหาชื่อหัวข้อไม่ตรงกัน
         rows = data[1:]
         processed_rows = []
         for r in rows:
             row_data = []
             for i in range(len(columns_order)):
                 if i < len(r):
-                    row_data.append(r[i])
+                    val = r[i]
+                    # แปลงคอลัมน์วันที่ให้เป็นไทยตอนแสดงผล
+                    if i == 0:
+                        val = format_thai_date(val)
+                    row_data.append(val)
                 else:
                     row_data.append("")
             processed_rows.append(row_data)
             
         df = pd.DataFrame(processed_rows, columns=columns_order)
-        
-        if 'วันที่' in df.columns:
-            df['วันที่'] = df['วันที่'].apply(format_thai_date)
-            
         return df[columns_order]
     except Exception as e:
         return pd.DataFrame(columns=columns_order)
 
 def save_data(df):
     try:
+        # แปลงวันที่ภาษาไทยกลับเป็น YYYY-MM-DD ก่อนบันทึกลง Google Sheets
+        df_to_save = df.copy()
+        if 'วันที่' in df_to_save.columns:
+            df_to_save['วันที่'] = df_to_save['วันที่'].apply(convert_to_iso_date)
+            
         payload = {
             "action": "save",
-            "rows": [df.columns.values.tolist()] + df.values.tolist()
+            "rows": [df_to_save.columns.values.tolist()] + df_to_save.values.tolist()
         }
         requests.post(WEB_APP_URL, json=payload)
     except Exception as e:
@@ -86,9 +113,10 @@ with st.sidebar.form("health_form", clear_on_submit=True):
     note = st.text_input("📝 บันทึกเพิ่มเติม")
     
     if st.form_submit_button("🚀 บันทึกข้อมูลสุขภาพ"):
-        formatted_date_str = format_thai_date(date_input)
+        # บันทึกแบบสากลลงระบบหลังบ้าน
+        iso_date_str = date_input.strftime("%Y-%m-%d")
         new_row = {
-            "วันที่": formatted_date_str,
+            "วันที่": iso_date_str,
             "เวลา / เหตุการณ์": time_event,
             "SYS": sys,
             "DIA": dia,
@@ -97,9 +125,11 @@ with st.sidebar.form("health_form", clear_on_submit=True):
             "น้ำหนัก": weight,
             "บันทึกเพิ่มเติม": note
         }
-        df_current = get_data()
+        df_current_raw = get_data()
+        # แปลงข้อมูลในตารางกลับเป็น ISO ก่อนต่อแถวใหม่
+        df_current_raw['วันที่'] = df_current_raw['วันที่'].apply(convert_to_iso_date)
         new_df = pd.DataFrame([new_row])
-        final_df = pd.concat([df_current, new_df], ignore_index=True)
+        final_df = pd.concat([df_current_raw, new_df], ignore_index=True)
         save_data(final_df)
         st.success("บันทึกข้อมูลสุขภาพเรียบร้อยครับ!")
         st.rerun()
