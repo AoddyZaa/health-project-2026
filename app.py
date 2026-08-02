@@ -9,7 +9,8 @@ import requests
 st.set_page_config(page_title="บันทึกสุขภาพเพื่อคุณหมอ 2026", page_icon="🩺", layout="wide")
 
 columns_order = ["วันที่", "เวลา / เหตุการณ์", "SYS", "DIA", "BPM", "FBS", "น้ำหนัก", "บันทึกเพิ่มเติม"]
-WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNvSt-Ex1n5ix6rqn8Pn9QI1lqQQmlGke-hswGGyAUAPFDMomKXhaBmzWwvNaOJzBDhA/exec"
+# อัปเดต URL เป็นของโปรแกรมสุขภาพแล้วครับ!
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxA_6LR6KN7dfd2_4CjaGSE1_OPc9YzAr9V9z0YdHyXJcX_Cnyy9Ter0MpzRhtF0uZ1/exec"
 
 def format_thai_date(date_input):
     try:
